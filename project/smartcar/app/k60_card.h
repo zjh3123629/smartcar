@@ -48,7 +48,7 @@
  * LPLD提示：MK60DZ10不推荐使用100MHz以上频率，可能引起不可修复的故障
  *           此列表为LPLD固件库列出的常用频率，可以满足各种功能、功耗需求
  */
-#define CORE_CLK_MHZ        PLL_100       
+#define CORE_CLK_MHZ        PLL_200
    
 /*
  * 总线频率定义(BUS_CLK_MHZ)
@@ -58,7 +58,7 @@
  * LPLD提示：MK60DZ10额定最高总线频率为50MHz
  *           此处设置的为期望值，即最终输出频率不会高于此频率
 */
-#define BUS_CLK_MHZ         50u    
+#define BUS_CLK_MHZ         (CORE_CLK_MHZ/2)
    
 /*
  * Flex总线频率定义(FLEXBUS_CLK_MHZ)
@@ -68,7 +68,7 @@
  * LPLD提示：MK60DZ10额定最高Flex总线频率为50MHz
  *           此处设置的为期望值，即最终输出频率不会高于此频率
 */
-#define FLEXBUS_CLK_MHZ     50u 
+#define FLEXBUS_CLK_MHZ     50u
    
 /*
  * Flash频率定义(FLASH_CLK_MHZ)
@@ -78,7 +78,7 @@
  * LPLD提示：MK60DZ10额定最高Flash频率为25MHz
  *           此处设置的为期望值，即最终输出频率不会高于此频率
 */
-#define FLASH_CLK_MHZ       25u    
+#define FLASH_CLK_MHZ       25u
 
 
 /* 
