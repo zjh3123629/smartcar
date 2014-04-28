@@ -27,6 +27,13 @@
 #define __K60_CARD_H__
 
 /*
+ * author: zhouzuoyu
+ * email: zjh3123629@163.com
+ * for MINIK60
+ */
+#define MINIK60
+
+/*
  * 系统主频定义(CORE_CLK_MHZ)
  * 可选范围:
  * PLL_48        //48MHz 如果使用USB模块，必须选择48的倍数主频
@@ -77,7 +84,11 @@
 /* 
  * 选择调试信息输出所有的串口号和波特率
  */
-#define TERM_PORT           UART5
+#ifdef MINIK60
+	#define TERM_PORT           UART4
+#else
+	#define TERM_PORT           UART5
+#endif
 #define TERMINAL_BAUD       115200
 
 /*
