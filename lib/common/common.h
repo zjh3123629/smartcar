@@ -117,6 +117,7 @@ typedef unsigned char   boolean;      /* 8-bit*/
 #include "uif.h"
 #include "stdlib.h"
 #include "relocate.h"
+#include "delay.h"
 #if (defined(__IAR_SYSTEMS_ICC__))
 	#include "intrinsics.h"
 #endif
