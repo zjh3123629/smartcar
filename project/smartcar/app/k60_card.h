@@ -49,7 +49,7 @@
  *           此列表为LPLD固件库列出的常用频率，可以满足各种功能、功耗需求
  */
 #define CORE_CLK_MHZ        PLL_200
-   
+
 /*
  * 总线频率定义(BUS_CLK_MHZ)
  * 可选范围:
@@ -59,7 +59,7 @@
  *           此处设置的为期望值，即最终输出频率不会高于此频率
 */
 #define BUS_CLK_MHZ         (CORE_CLK_MHZ/2)
-   
+
 /*
  * Flex总线频率定义(FLEXBUS_CLK_MHZ)
  * 可选范围:
