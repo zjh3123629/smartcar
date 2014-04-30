@@ -1,19 +1,6 @@
 #include "DEV_oled.h"
 #include "Font_oled.h"
 
-/* 
- * FIXME
- * 1: need to modify
- */
-#define oled_d0_on()	LPLD_GPIO_Output_b(PTE, 0, 1)
-#define oled_d0_off()	LPLD_GPIO_Output_b(PTE, 0, 0)
-#define oled_d1_on()	LPLD_GPIO_Output_b(PTE, 1, 1)
-#define oled_d1_off()	LPLD_GPIO_Output_b(PTE, 1, 0)
-#define oled_rst_on()	LPLD_GPIO_Output_b(PTE, 2, 1)
-#define oled_rst_off()	LPLD_GPIO_Output_b(PTE, 2, 0)
-#define oled_dc_on()	LPLD_GPIO_Output_b(PTE, 3, 1)
-#define oled_dc_off()	LPLD_GPIO_Output_b(PTE, 3, 0)
-
 /****************************************************************************
  - 功能描述：发送数据到oled
  - 参数说明：data：要发送的8位数据
@@ -27,8 +14,7 @@ static void oled_write_data(uint8 data)
 	uint8 i = 8;
 
 	oled_dc_on();  // 发送数据
-
-	oled_d0_off();
+	
 	while (i--) {
 		// 每次发送数据的最高位
 		if (data & 0x80)
@@ -36,14 +22,16 @@ static void oled_write_data(uint8 data)
 		else
 			oled_d1_off();
 		
-		asm("nop");	// 加适当的延时
-
+		//asm("nop");	// 加适当的延时
+		
 		// 时钟的上升沿发送
-		oled_d0_on();
 		oled_d0_off();
+		oled_d0_on();
 
 		data <<= 1;
 	}
+	
+	oled_d0_off();
 }
 
 /****************************************************************************
@@ -59,8 +47,7 @@ static void oled_write_cmd(uint8 cmd)
 	uint8 i = 8;
 
 	oled_dc_off();    // 发送命令
-
-	oled_d0_off();
+	
 	while (i--) {
 		// 每次发送命令的最高位
 		if (cmd & 0x80)
@@ -68,14 +55,16 @@ static void oled_write_cmd(uint8 cmd)
 		else
 			oled_d1_off();
 
-		asm("nop");	// 加适当的延时
+		//asm("nop");	// 加适当的延时
 
 		// 时钟的上升沿发送
-		oled_d0_on();
 		oled_d0_off();
+		oled_d0_on();
 
 		cmd <<= 1;
 	}
+	
+	oled_d0_off();
 }
 
 /****************************************************************************
@@ -422,22 +411,6 @@ void oled_clear(void)
 	oled_fill(DARK);
 }
 
-/* 
- * FIXME
- * 2: need to modify
- */
-static void init_oled_pin(void)
-{
-	GPIO_InitTypeDef gpio_init_struct;
-
-	gpio_init_struct.GPIO_PTx = PTE;
-	gpio_init_struct.GPIO_Pins = GPIO_Pin0|GPIO_Pin1|GPIO_Pin2|GPIO_Pin3;
-	gpio_init_struct.GPIO_Dir = DIR_OUTPUT;
-	gpio_init_struct.GPIO_Output = OUTPUT_H;
-	gpio_init_struct.GPIO_PinControl = IRQC_DIS;
-	
-	LPLD_GPIO_Init(gpio_init_struct);
-}
 
 /****************************************************************************
  - 功能描述：初始化oled
@@ -541,10 +514,10 @@ static void oled_print_6x8_string(uint8 x, uint8 y, uint8 ch[])
    while (ch[j] != '\0')   // 判断字符串是否结束
    {
       c = ch[j]-32;        // 该文件中所用的ASCII表是从完整的ASCII表的第32位开始的
-      // 定位坐标位置
-      if (x > 126)
-      {
-         x=0;
+      
+	  // 从新定位坐标位置
+      if (x > 126) {
+         x = 0;
          y++;
       }
       oled_set_position(x, y);
@@ -570,18 +543,19 @@ static void oled_print_6x8_string(uint8 x, uint8 y, uint8 ch[])
 ****************************************************************************/
 static void oled_print_8x16_string(uint8 x, uint8 y, uint8 ch[], uint8 mode)
 {
+#define FONT8x16_WIDTH	8
    uint8 c=0, i=0, j=0;    // c：需要显示的编码在ASCII表中的位置
 
    while (ch[j] != '\0')   // 判断字符串是否结束
    {
       c = ch[j] - 32;      // 该文件中所用的ASCII表是从完整的ASCII表的第32位开始的
-      // 定位坐标位置
-      if (x > 120)
-      {
+      
+	  /* 内容超过一行需要写在下一行时，坐标需要重新定位 */
+      if (x > (X_WIDTH-FONT8x16_WIDTH)) {
          x = 0;
-         y++;
+         y += 2;
       }
-      oled_set_position(x,y);
+      oled_set_position(x, y);
       // 写入数据
       for (i=0; i<8; i++)
       {
@@ -595,7 +569,7 @@ static void oled_print_8x16_string(uint8 x, uint8 y, uint8 ch[], uint8 mode)
          }
       }
 
-      oled_set_position(x,y+1);
+      oled_set_position(x, y+1);
       for (i=0; i<8; i++)
       {
          if (mode == NORMAL_DISPLAY)
@@ -624,13 +598,14 @@ static void oled_print_8x16_string(uint8 x, uint8 y, uint8 ch[], uint8 mode)
 ****************************************************************************/
 static void oled_print_14x16_string(uint8 x, uint8 y, uint8 ch[], uint8 mode)
 {
+#define FONT14x16_WIDTH		14
    uint8 wm=0, ii=0;
-   uint16 adder = 1;         // 需要显示的汉字编码在Front_14x16[]中的位置
+   uint16 addr = 1;         // 需要显示的汉字编码在Front_14x16[]中的位置
 
    while (ch[ii] != '\0')  // 判断需要显示的字符串是否结束
    {
       wm = 0;
-      adder = 1;
+      addr = 1;
       // 查找：需要显示的汉字编码与Front_14x16_Idx[]中哪一个汉字的编码相对应
       while (Front_14x16_Idx[wm] > 127)   // 查找到Front_14x16_Idx[]的末尾
       {
@@ -638,7 +613,7 @@ static void oled_print_14x16_string(uint8 x, uint8 y, uint8 ch[], uint8 mode)
          {
             if (Front_14x16_Idx[wm + 1] == ch[ii + 1])
             {
-               adder = wm * 14;
+               addr = wm * 14;
                // 两个字节的编码都相等=>寻找到需要显示的汉字编码=>退出查找
                break;
             }
@@ -646,41 +621,40 @@ static void oled_print_14x16_string(uint8 x, uint8 y, uint8 ch[], uint8 mode)
          wm += 2;
       }
       // 定位坐标位置
-      if (x > 118)
-      {
-         x=0;
-         y++;
+      if (x > (X_WIDTH-FONT14x16_WIDTH)) {
+         x = 0;
+         y += 2;
       }
       oled_set_position(x, y);
 
       // 查找到编码显示相应的汉字
-      if (adder != 1)
+      if (addr != 1)
       {
          oled_set_position(x, y);
          for (wm=0; wm<14; wm++)
          {
             if (mode == NORMAL_DISPLAY)
             {
-               oled_write_data(Front_14x16[adder]);
+               oled_write_data(Front_14x16[addr]);
             }
             else
             {
-               oled_write_data(~Front_14x16[adder]);
+               oled_write_data(~Front_14x16[addr]);
             }
-            adder += 1;
+            addr += 1;
          }
          oled_set_position(x, y+1);
          for (wm=0; wm<14; wm++)
          {
             if (mode == NORMAL_DISPLAY)
             {
-               oled_write_data(Front_14x16[adder]);
+               oled_write_data(Front_14x16[addr]);
             }
             else
             {
-               oled_write_data(~Front_14x16[adder]);
+               oled_write_data(~Front_14x16[addr]);
             }
-            adder += 1;
+            addr += 1;
          }   		
       }
       // 查找不到编码则显示空白并且进行下一轮的查找
@@ -717,11 +691,9 @@ void oled_print(uint8 x, uint8 y, uint8 ch[], uint8 mode)
 	uint8 ch2[3];
 	uint8 ii = 0;
 	
-	while (ch[ii] != '\0')
-	{
+	while (ch[ii] != '\0') {
 	   // 需要显示的是汉字
-		if (ch[ii] > 127)
-		{
+		if (ch[ii] > 127) {
 			ch2[0] = ch[ii];  // 汉字为两个字节
 	 		ch2[1] = ch[ii+1];
 			ch2[2] = '\0';
@@ -731,8 +703,7 @@ void oled_print(uint8 x, uint8 y, uint8 ch[], uint8 mode)
 			ii += 2;
 		}
 		// 需要显示的是字母
-		else
-		{
+		else {
 			ch2[0] = ch[ii];  // 字母占一个字节
 			ch2[1] = '\0';
 			oled_print_8x16_string(x, y, ch2, mode);	// 显示字母
@@ -764,6 +735,7 @@ void oled_draw_picture(const uint8 *ptr)
    }
 }
 
+#if 0
 /****************************************************************************
  - 功能描述：显示占3格位置的变量
  - 返回说明：x：      列地址
@@ -782,7 +754,7 @@ void oled_Print_Uint8_Variable(uint8 x, uint8 y, uint8 display, uint8 mode)
    temp[2] = display%10+'0';
    temp[3] = '\0';
 
-   oled_Print(x, y, temp, mode);
+   oled_print(x, y, temp, mode);
 }
 
 /****************************************************************************
@@ -805,7 +777,7 @@ void oled_Print_Uint16_Variable(uint8 x, uint8 y, uint16 display, uint8 mode)
    temp[4] = display%10+'0';
    temp[5] = '\0';
 
-   oled_Print(x, y, temp, mode);
+   oled_print(x, y, temp, mode);
 }
 
 /****************************************************************************
@@ -836,7 +808,7 @@ void oled_Print_Int16_Variable(uint8 x, uint8 y, int16 display, uint8 mode)
    temp[5] = display%10+'0';
    temp[6] = '\0';
 
-   oled_Print(x, y, temp, mode);
+   oled_print(x, y, temp, mode);
 }
 
 /****************************************************************************
@@ -860,7 +832,7 @@ void oled_Print_Float_Variable(uint8 x, uint8 y, float display, uint8 mode)
 
    temp[4] = '\0';
 
-   oled_Print(x, y, temp, mode);
+   oled_print(x, y, temp, mode);
 }
 
 /****************************************************************************
@@ -886,7 +858,7 @@ void oled_Print_Hex(uint8 x, uint8 y, uint8 display, uint8 mode)
       temp[0] = i+0x37;
    }
    temp[1] = '\0';
-   oled_Print(x, y, temp, mode);
+   oled_print(x, y, temp, mode);
 
    // 显示16进制的后一个字母
    i = (uint8)(display%16);
@@ -899,7 +871,7 @@ void oled_Print_Hex(uint8 x, uint8 y, uint8 display, uint8 mode)
       temp[0] = i+0x37;
    }
    temp[1] = '\0';
-   oled_Print(x+8, y, temp, mode);
+   oled_print(x+8, y, temp, mode);
 }
 
 /****************************************************************************
@@ -934,3 +906,5 @@ void oled_Print_Blackline(void)
       oled_Print_Hex(i*24, 6, rightBlackline[5+i], NORMAL_DISPLAY);
    }
 }
+
+#endif

@@ -111,6 +111,7 @@ typedef enum PortPinsEnum
 
 #ifdef MINIK60
 	#include "DEV_LED.h"
+	#include "DEV_OLED.h"
 #endif
 
 #endif /* __LPLD_DRIVERS_H__ */
