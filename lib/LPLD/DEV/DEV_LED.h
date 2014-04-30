@@ -3,10 +3,8 @@
 
 #include "common.h"
 
-enum {
-	DARK = 0,
-	LIGHT,
-};
+#define DARK	0
+#define LIGHT	1
 
 void init_led(void);
 void led_on(void);
