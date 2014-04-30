@@ -186,6 +186,30 @@ uint8 LPLD_FTM_Deinit(FTM_InitTypeDef ftm_init_structure)
  */
 uint8 LPLD_FTM_PWM_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty, PortPinsEnum_Type pin, uint8 align)
 {
+#ifdef MINIK60
+	uint32 cv = 0;
+	vuint32 mod = ftmx->MOD + 1;
+
+	// 参数检查
+	ASSERT( duty <= mod );
+
+	if (!LPLD_FTM_PinInit(ftmx, chn, pin))
+		return 0;
+
+	// 如果是右对齐，100%-占空比
+	if (align == ALIGN_RIGHT)
+		duty = mod - duty;
+
+	// 配置FTM通道控制寄存器 
+	// 通道模式 MSB:MSA-1X, 通道边缘选择 左对齐 ELSB:ELSA-10
+	// 通道模式 MSB:MSA-1X, 通道边缘选择 右对齐 ELSB:ELSA-X1
+	ftmx->CONTROLS[chn].CnSC = align;
+	// 配置FTM通道值
+	// 占空比 = CnV-CNTIN
+	ftmx->CONTROLS[chn].CnV = duty;
+
+	return 1;
+#else
   uint32 cv;
   vuint32 mod;
   
@@ -213,6 +237,7 @@ uint8 LPLD_FTM_PWM_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty, Port
   ftmx->CONTROLS[chn].CnV  = cv;
   
   return 1;
+#endif
 }
 
 /*
@@ -242,6 +267,22 @@ uint8 LPLD_FTM_PWM_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty, Port
  */
 uint8 LPLD_FTM_PWM_ChangeDuty(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty)
 {
+#ifdef MINIK60
+	uint32 cv = 0;
+	vuint32 mod = ftmx->MOD + 1;
+
+	//参数检查
+	ASSERT( duty <= mod );	//判断占空比
+
+	//如果是右对齐，100%-占空比
+	if (ftmx->CONTROLS[chn].CnSC & FTM_CnSC_ELSA_MASK)
+		duty = mod - duty;
+
+	// 配置FTM通道值
+	ftmx->CONTROLS[chn].CnV = duty;
+
+	return 1;
+#else
   uint32 cv;
   vuint32 mod;
   
@@ -262,6 +303,7 @@ uint8 LPLD_FTM_PWM_ChangeDuty(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty)
   ftmx->CONTROLS[chn].CnV = cv;
   
   return 1;
+#endif
 }
 
 /*
@@ -731,12 +773,12 @@ static uint8 LPLD_FTM_PWM_Init(FTM_InitTypeDef ftm_init_structure)
   ftmx->SC = 0;
   
   // 设置PWM周期及占空比
-  //    PWM周期 = (MOD-CNTIN+1)*FTM时钟周期 :
+  // PWM周期 = (MOD-CNTIN+1)*FTM时钟周期 :
   // 配置FTM计数初始值
   ftmx->CNT = 0;
-  ftmx->CNTIN = 0;
+  ftmx->CNTIN = 0;	// The EPWM mode must be used only with CNTIN = 0x0000
   // 配置FTM计数MOD值
-  ftmx->MOD = mod2;
+  ftmx->MOD = mod2 - 1;	// The EPWM period is determined by (MOD - CNTIN + 0x0001)
   
   ftmx->DEADTIME = FTM_DEADTIME_DTPS(dt_div) | FTM_DEADTIME_DTVAL(dt_val);
   ftmx->COMBINE = dt_en;        //使能死区
