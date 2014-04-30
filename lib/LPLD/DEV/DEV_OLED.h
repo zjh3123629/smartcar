@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+#if 0
 //----------------------OLED管脚声明----------------------//
 /*
  * 4线SPI使用说明：
@@ -31,6 +32,14 @@
 #define  OLED_DC_OUT()     DDR1AD0_DDR1AD03 = 1
 #define  OLED_DC_ON()      PT1AD0_PT1AD03 = 1
 #define  OLED_DC_OFF()     PT1AD0_PT1AD03 = 0
+#else
+/* 
+ * PTE0 <--> D0, 
+ * PTE1 <--> D1, 
+ * PTE2 <--> RST, 
+ * PTE3 <--> DC
+ */
+#endif
 
 //----------------------OLED控制指令----------------------//
 #define  XLevelL		                  0x00        // 起始列地址的低四位         
@@ -60,8 +69,8 @@
 
 #define	CONTRAST_VALUE	               0xcf
 
-#define  NORMAL_DISPLAY                0
-#define  INVERSE_DISPLAY               1
+#define NORMAL_DISPLAY                0
+#define INVERSE_DISPLAY               1
 
 //----------------------变量声明----------------------//
 extern const uint8 startLogo[];
@@ -77,9 +86,9 @@ extern void oled_fill(uint8 flag);
 // 显示字符串
 extern void oled_print(uint8 x, uint8 y, uint8 ch[], uint8 mode);
 // 显示图片
-extern void OLED_Draw_Pixel(uint8 x, uint8 y);
-extern void OLED_Draw_Rectangle(uint8 x1, uint8 y1, uint8 x2, uint8 y2, uint8 gif);
-extern void OLED_Draw_Picture(const uint8 *ptr);
+extern void oled_draw_pixel(uint8 x, uint8 y);
+extern void oled_draw_rectangle(uint8 x1, uint8 y1, uint8 x2, uint8 y2, uint8 gif);
+extern void oled_draw_picture(const uint8 *ptr);
 // 显示变量
 extern void OLED_Print_Uint8_Variable(uint8 x, uint8 y, uint8 display, uint8 mode);
 extern void OLED_Print_Uint16_Variable(uint8 x, uint8 y, uint16 display, uint8 mode);
