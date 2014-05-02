@@ -187,7 +187,6 @@ uint8 LPLD_FTM_Deinit(FTM_InitTypeDef ftm_init_structure)
 uint8 LPLD_FTM_PWM_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty, PortPinsEnum_Type pin, uint8 align)
 {
 #ifdef MINIK60
-	uint32 cv = 0;
 	vuint32 mod = ftmx->MOD + 1;
 
 	// 参数检查
@@ -268,7 +267,6 @@ uint8 LPLD_FTM_PWM_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty, Port
 uint8 LPLD_FTM_PWM_ChangeDuty(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty)
 {
 #ifdef MINIK60
-	uint32 cv = 0;
 	vuint32 mod = ftmx->MOD + 1;
 
 	//参数检查

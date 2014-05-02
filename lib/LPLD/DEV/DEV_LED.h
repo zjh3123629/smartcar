@@ -3,11 +3,13 @@
 
 #include "common.h"
 
-#define DARK	0
-#define LIGHT	1
+#define NORMAL	0
+#define BREATH	1
+void init_led(uint8 mode);
 
-void init_led(void);
 void led_on(void);
 void led_off(void);
+
+void led_update_brightness(int8 percent);
 
 #endif
