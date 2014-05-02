@@ -62,6 +62,8 @@ void * memcpy (void *, const void *, unsigned);
 
 void * memset (void *, int, unsigned);
 
+void * bzero (void *, unsigned);
+
 void free (void *);
  
 void * malloc (unsigned);
