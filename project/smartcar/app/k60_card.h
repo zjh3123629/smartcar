@@ -129,6 +129,12 @@
  * 定义MCU型号
  */
 #define CPU_MK60DZ10
-
+/*
+ * MINIk60使用的是MK60DN512VLL10
+ * 1: MK60DN512VLL10和MK60DN512VLQ10的63个DMA触发源不同
+ */
+#ifdef MINIK60
+	#define CPU_MK60DN512VLL10
+#endif
 
 #endif /* __K60_CARD_H__ */
