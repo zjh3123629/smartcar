@@ -65,6 +65,9 @@ typedef unsigned char   boolean;      /* 8-bit*/
 #define NULL    0
 #endif
 
+#define DISABLE	0
+#define ENABLE	1
+
 /********************************************************************/
 
 /*

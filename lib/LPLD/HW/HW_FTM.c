@@ -202,7 +202,8 @@ uint8 LPLD_FTM_PWM_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty, Port
 	// 配置FTM通道控制寄存器 
 	// 通道模式 MSB:MSA-1X, 通道边缘选择 左对齐 ELSB:ELSA-10
 	// 通道模式 MSB:MSA-1X, 通道边缘选择 右对齐 ELSB:ELSA-X1
-	ftmx->CONTROLS[chn].CnSC = align;
+	ftmx->CONTROLS[chn].CnSC &= ~(FTM_CnSC_ELSA_MASK|FTM_CnSC_ELSB_MASK|FTM_CnSC_MSA_MASK|FTM_CnSC_MSB_MASK);
+	ftmx->CONTROLS[chn].CnSC |= align;
 	// 配置FTM通道值
 	// 占空比 = CnV-CNTIN
 	ftmx->CONTROLS[chn].CnV = duty;
@@ -304,6 +305,20 @@ uint8 LPLD_FTM_PWM_ChangeDuty(FTM_Type *ftmx, FtmChnEnum_Type chn, uint32 duty)
 #endif
 }
 
+// refer to P1051
+uint8 LPLD_FTM_PWM_DMA_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint8 enable)
+{
+	if (ENABLE == enable) {
+		ftmx->CONTROLS[chn].CnSC |= (1<<6);		// 1 Enable channel interrupts
+		ftmx->CONTROLS[chn].CnSC |= (1<<0);		// 1 Enable DMA transfers
+	} else {
+		ftmx->CONTROLS[chn].CnSC &= ~(1<<6);	// 0 Disable channel interrupts
+		ftmx->CONTROLS[chn].CnSC &= ~(1<<0);	// 0 Disable DMA transfers
+	}
+
+	return 1;
+}
+
 /*
  * LPLD_FTM_DisableChn
  * 禁用FTM模块指定通道的输出、输入
@@ -335,8 +350,6 @@ uint8 LPLD_FTM_DisableChn(FTM_Type *ftmx, FtmChnEnum_Type chn)
   
   return 1;
 }
-
-
 
 /*
  * LPLD_FTM_IC_Enable
@@ -580,6 +593,16 @@ __INLINE void LPLD_FTM_ClearCounter(FTM_Type *ftmx)
   ftmx->CNT = 0;        //清空FTMx计数器值
 }
 
+__INLINE uint16 LPLD_FTM_GetMod(FTM_Type *ftmx)
+{
+	return ftmx->MOD + 1;
+}
+
+__INLINE uint16 LPLD_FTM_GetChDuty(FTM_Type *ftmx, FtmChnEnum_Type chn)
+{
+	return ftmx->CONTROLS[chn].CnV;
+}
+
 /*
  * LPLD_FTM_EnableIrq
  * 使能FTMx中断
@@ -703,7 +726,9 @@ uint8 LPLD_FTM_QD_Disable(FTM_Type *ftmx)
 /*
  * LPLD_FTM_PWM_Init
  * FTM模块PWM模式初始化，内部调用
+ * PWM最大周期: 128/BUS_CLOCK*0xffff ~= 11.92Hz
  */
+ #define PWM_MIN_FREQ	12
 static uint8 LPLD_FTM_PWM_Init(FTM_InitTypeDef ftm_init_structure)
 {
   uint32 bus_clk_hz;
@@ -716,7 +741,7 @@ static uint8 LPLD_FTM_PWM_Init(FTM_InitTypeDef ftm_init_structure)
   FTM_Type *ftmx = ftm_init_structure.FTM_Ftmx;
   
   //参数检查
-  ASSERT( freq );                  //判断频率
+  ASSERT( PWM_MIN_FREQ<freq );		//判断频率
   ASSERT( dt_val<=63 );            //判断死区插入值
   
   bus_clk_hz = g_bus_clock;

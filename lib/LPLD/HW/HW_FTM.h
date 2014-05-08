@@ -202,6 +202,8 @@ uint8 LPLD_FTM_Deinit(FTM_InitTypeDef);
 uint8 LPLD_FTM_PWM_Enable(FTM_Type *, FtmChnEnum_Type, uint32, PortPinsEnum_Type, uint8);
 //变更FTM模块PWM模式指定通道的输出占空比
 uint8 LPLD_FTM_PWM_ChangeDuty(FTM_Type *, FtmChnEnum_Type, uint32);
+// enable/disable dma
+uint8 LPLD_FTM_PWM_DMA_Enable(FTM_Type *ftmx, FtmChnEnum_Type chn, uint8 enable);
 //FTM模块输入捕获模式输出使能，配置输入通道、指定对应的引脚、捕获边缘
 uint8 LPLD_FTM_IC_Enable(FTM_Type *, FtmChnEnum_Type, PortPinsEnum_Type, uint8);
 //禁用FTM模块指定通道的输出、输入
@@ -227,6 +229,10 @@ uint8 LPLD_FTM_GetClkDiv(FTM_Type *);
 uint16 LPLD_FTM_GetCounter(FTM_Type *);
 //清空FTMx计数器
 void LPLD_FTM_ClearCounter(FTM_Type *);
+//获取FTMx mod
+uint16 LPLD_FTM_GetMod(FTM_Type *);
+//获取FTMx通道n duty
+uint16 LPLD_FTM_GetChDuty(FTM_Type *, FtmChnEnum_Type);
 
 //使能FTMx中断
 uint8 LPLD_FTM_EnableIrq(FTM_InitTypeDef);
