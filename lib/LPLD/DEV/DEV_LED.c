@@ -22,6 +22,7 @@ void init_led(uint8 mode)
 	} else {
 		/* PTA3 <--> FTM0.ch0 */
 		FTM_InitTypeDef ftm_init_struct;
+		bzero(&ftm_init_struct, sizeof(FTM_InitTypeDef));
 		
 		ftm_init_struct.FTM_Ftmx = FTM0;
 		ftm_init_struct.FTM_Mode = FTM_MODE_PWM;
