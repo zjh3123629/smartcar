@@ -75,7 +75,7 @@ uint8 LPLD_LPTMR_Init(LPTMR_InitTypeDef lptmr_init_structure)
     }
     else if(pluseacc_input == LPTMR_ALT2)       //PTC5引脚
     {
-      PORTC->PCR[5] = PORT_PCR_MUX(0x4);        //设置PTC5为脉冲累加  
+      PORTC->PCR[5] = PORT_PCR_MUX(0x3);        //设置PTC5为脉冲累加  
     }
 
     //与所用的内部时钟无关
