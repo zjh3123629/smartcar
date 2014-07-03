@@ -184,6 +184,7 @@ uint8 LPLD_LPTMR_DisableIrq(void)
  */
 uint16 LPLD_LPTMR_GetPulseAcc(void)
 {
+	LPTMR0->CNR = 0;	// ÏÈÐ´ÔÙ¶Á
    return (uint16)LPTMR0->CNR;
 }
 
