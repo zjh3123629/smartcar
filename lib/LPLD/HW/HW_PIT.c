@@ -70,6 +70,9 @@ uint8 LPLD_PIT_Init(PIT_InitTypeDef pit_init_structure)
   //PIT->CHANNEL[pitx].TCTRL = PIT_TCTRL_TIE_MASK;
   //开始定时
   PIT->CHANNEL[pitx].TCTRL |= PIT_TCTRL_TEN_MASK;
+
+  // 重新开启 PIT
+  PIT->MCR = 0x00;
   
   return 1;
 }
