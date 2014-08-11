@@ -136,6 +136,7 @@ uint8 LPLD_LPTMR_Deinit(void)
 void LPLD_LPTMR_ResetCounter(void)
 {
   LPTMR0->CSR&=(~LPTMR_CSR_TEN_MASK);       //Reset LPTMR0 Counter
+  LPTMR0->CSR |= LPTMR_CSR_TEN_MASK; 		//¿ªÆôLPTMR
 }
 /*
  * LPLD_LPTMR_EnableIrq
