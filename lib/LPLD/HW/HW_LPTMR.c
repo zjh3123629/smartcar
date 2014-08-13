@@ -75,7 +75,7 @@ uint8 LPLD_LPTMR_Init(LPTMR_InitTypeDef lptmr_init_structure)
     }
     else if(pluseacc_input == LPTMR_ALT2)       //PTC5引脚
     {
-      PORTC->PCR[5] = PORT_PCR_MUX(0x4);        //设置PTC5为脉冲累加  
+      PORTC->PCR[5] = PORT_PCR_MUX(0x3);        //设置PTC5为脉冲累加  
     }
 
     //与所用的内部时钟无关
@@ -136,6 +136,7 @@ uint8 LPLD_LPTMR_Deinit(void)
 void LPLD_LPTMR_ResetCounter(void)
 {
   LPTMR0->CSR&=(~LPTMR_CSR_TEN_MASK);       //Reset LPTMR0 Counter
+  LPTMR0->CSR |= LPTMR_CSR_TEN_MASK; 		//开启LPTMR
 }
 /*
  * LPLD_LPTMR_EnableIrq
@@ -184,6 +185,7 @@ uint8 LPLD_LPTMR_DisableIrq(void)
  */
 uint16 LPLD_LPTMR_GetPulseAcc(void)
 {
+	LPTMR0->CNR = 0;	// 先写再读
    return (uint16)LPTMR0->CNR;
 }
 
