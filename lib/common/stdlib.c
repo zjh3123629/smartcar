@@ -402,3 +402,8 @@ void * bzero (void *s, unsigned n)
 
 /****************************************************************/
 
+int32 abs(int32 number)
+{
+	return (number>= 0 ? number : -number);
+}
+

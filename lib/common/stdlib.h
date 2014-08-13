@@ -64,6 +64,8 @@ void * memset (void *, int, unsigned);
 
 void * bzero (void *, unsigned);
 
+int32 abs(int32 number);
+
 void free (void *);
  
 void * malloc (unsigned);
