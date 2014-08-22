@@ -76,22 +76,13 @@ uint16 balance_cal_ang(balance_inittype_def* balance_type, float accel, float gy
 
 void balance_keep(balance_inittype_def* balance_type)
 {
+	int32 nP, nD;
 	int32 left_motor_pwm=0, right_motor_pwm=0;
-	float kp=0, kd=0;
 
-	kp = (float)abs(BALANCE_ANGLE-balance_type->angle) / 15.0;
-	if (kp > 15.0)
-	kp = 15.0;
+	nP = (BALANCE_ANGLE - balance.angle) * ANGLE_KP;
+	nD = (balance.gyro_h - balance.gyro_h_offset) * ANGLE_KD;
 
-	kd = (float)abs(balance.gyro_h_offset-balance_type->gyro_h) / 15.0;
-	if (kd > 15.0)
-	kd = 15.0;
-	
-	pid_set_parameters(&balance_pid, BALANCE_ANGLE, kp, 0, kd);
-	right_motor_pwm = left_motor_pwm = pid_position(&balance_pid, balance_type->angle);
-
-	left_motor_pwm += pid_position(&left_motor_pid, left_pulse);
-	right_motor_pwm += pid_position(&right_motor_pid, right_pulse);
+	right_motor_pwm = left_motor_pwm = nP - nD;
 
 	if (left_motor_pwm >= 0)
 		left_motor_pwm += MOTOR_DEADZONE;

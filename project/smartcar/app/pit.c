@@ -7,6 +7,8 @@ int32 right_pulse = 0;
 
 void pit0_isr(void)
 {
+#if 0
+	// 速度环
 	left_pulse = LPLD_LPTMR_GetPulseAcc();
 	// refer to P1062: 一个脉冲会让CNT+4
 	right_pulse = LPLD_FTM_GetCounter(FTM2);
@@ -29,11 +31,12 @@ void pit0_isr(void)
 	//@3|%d|%d|%d#
 	printf("%d, %d\n", left_pulse, right_pulse);
 #endif
+#endif
 
+	// 角度环
 	balance.gyro_h= balance.gyro_h_offset*2 - LPLD_ADC_Get(ADC1, DAD1);
 	balance.accel_y= LPLD_ADC_Get(ADC1, AD20);
 	balance_cal_ang(&balance, balance.accel_y, balance.gyro_h);
-
 #ifdef DEBUG_PRINT
 	//@3|%d|%d|%d#
 	printf("@3|%d|%d|%d#\n", (uint32)balance.accel_y, (uint32)balance.gyro_h, (uint32)balance.angle);

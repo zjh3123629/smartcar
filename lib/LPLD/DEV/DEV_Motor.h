@@ -8,7 +8,7 @@
 #define MOTOR_PWM_MAX	(BUS_CLK_MHZ*50)
 #define MOTOR_PWM_INIT	0
 
-#define MOTOR_DEADZONE 200
+#define MOTOR_DEADZONE 100
 
 enum {
 	LEFT_MOTOR,

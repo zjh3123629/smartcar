@@ -25,6 +25,11 @@ extern balance_inittype_def balance;
 #define GYRO_FACTOR	0.9
 #define ACCEL_FACTOR	(1-GYRO_FACTOR)
 
+enum {
+	ANGLE_KP = 12,
+	ANGLE_KD = 8,
+};
+
 void balance_init(void);
 uint16 balance_cal_ang(balance_inittype_def* balance_type, float accel, float gyro_h);
 void balance_keep(balance_inittype_def* balance_type);
