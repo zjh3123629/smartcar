@@ -1,4 +1,4 @@
-#include "encoder.h"
+#include "DEV_Encoder.h"
 
 // Ê¹ÓÃÂö³åÀÛ¼ÓÆ÷
 // PTA19
@@ -37,3 +37,12 @@ void init_encoder(void)
 	init_left_encoder();
 	init_right_encoder();
 }
+
+int encoder_dir(void)
+{
+	if (FTM2->QDCTRL & FTM_QDCTRL_QUADIR_MASK)
+		return POSITIVE;
+	else
+		return NEGATIVE;
+}
+
