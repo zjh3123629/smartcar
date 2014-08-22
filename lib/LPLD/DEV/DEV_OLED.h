@@ -2,6 +2,7 @@
 #define  _DEV_OLED_H_
 
 #include "common.h"
+#include "delay.h"
 
 /*
  * 4线SPI使用说明：
@@ -16,40 +17,43 @@
 
 /* 移植需要修改的gpio配置 */
 /* 
- * PTE0 <--> D0, 
- * PTE1 <--> D1, 
- * PTE2 <--> RST, 
- * PTE3 <--> DC
+ * PTA12 <--> D0, 
+ * PTA13 <--> D1, 
+ * PTA14 <--> RST, 
+ * PTA15 <--> DC
  */
+#define OLED_PORT	PTA
+enum {
+	OFF = 0,
+	ON = 1,
 
-/* 
- * FIXME
- * 1: need to modify
- */
+	D0 = 12,
+	D1 = 13,
+	RST = 14,
+	DC = 15
+};
+
 #define init_oled_pin()	\
 		do {\
 			GPIO_InitTypeDef gpio_init_struct;\
 			\
-			gpio_init_struct.GPIO_PTx = PTE;\
-			gpio_init_struct.GPIO_Pins = GPIO_Pin0|GPIO_Pin1|GPIO_Pin2|GPIO_Pin3;\
+			gpio_init_struct.GPIO_PTx = OLED_PORT;\
+			gpio_init_struct.GPIO_Pins = (1<<D0) | (1<<D1) | (1<<RST) | (1<<DC);\
 			gpio_init_struct.GPIO_Dir = DIR_OUTPUT;\
 			gpio_init_struct.GPIO_Output = OUTPUT_H;\
 			gpio_init_struct.GPIO_PinControl = IRQC_DIS;\
 			\
 			LPLD_GPIO_Init(gpio_init_struct);\
 		} while(0)
-/* 
- * FIXME
- * 2: need to modify
- */
-#define oled_d0_on()	LPLD_GPIO_Output_b(PTE, 0, 1)
-#define oled_d0_off()	LPLD_GPIO_Output_b(PTE, 0, 0)
-#define oled_d1_on()	LPLD_GPIO_Output_b(PTE, 1, 1)
-#define oled_d1_off()	LPLD_GPIO_Output_b(PTE, 1, 0)
-#define oled_rst_on()	LPLD_GPIO_Output_b(PTE, 2, 1)
-#define oled_rst_off()	LPLD_GPIO_Output_b(PTE, 2, 0)
-#define oled_dc_on()	LPLD_GPIO_Output_b(PTE, 3, 1)
-#define oled_dc_off()	LPLD_GPIO_Output_b(PTE, 3, 0)
+
+#define oled_d0_on()	LPLD_GPIO_Output_b(OLED_PORT, D0, ON)
+#define oled_d0_off()	LPLD_GPIO_Output_b(OLED_PORT, D0, OFF)
+#define oled_d1_on()	LPLD_GPIO_Output_b(OLED_PORT, D1, ON)
+#define oled_d1_off()	LPLD_GPIO_Output_b(OLED_PORT, D1, OFF)
+#define oled_rst_on()	LPLD_GPIO_Output_b(OLED_PORT, RST, ON)
+#define oled_rst_off()	LPLD_GPIO_Output_b(OLED_PORT, RST, OFF)
+#define oled_dc_on()	LPLD_GPIO_Output_b(OLED_PORT, DC, ON)
+#define oled_dc_off()	LPLD_GPIO_Output_b(OLED_PORT, DC, OFF)
 
 //----------------------OLED控制指令----------------------//
 #define  XLevelL						0x00        // 起始列地址的低四位         
