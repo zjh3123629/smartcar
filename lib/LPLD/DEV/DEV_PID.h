@@ -1,9 +1,9 @@
 #ifndef  _DEV_PID_H_
 #define  _DEV_PID_H_
 
-#include "common.h"
-
 //----------------------头文件----------------------//
+#include "common.h"
+#include "DEV_Motor.h"
 
 //----------------------结构体声明----------------------//
 typedef struct PID
@@ -12,24 +12,28 @@ typedef struct PID
 	float ki;		// 积分常数 Integral Const
 	float kd;		// 微分常数 Derivative Const
 
-	uint16 point;	// 设定的目标 Desired Value
-	int16 ek;
-	int16 ek_1;		// e[k-1]
-	int16 ek_2;		// e[k-2]
+	int32 point;	// 设定的目标 Desired Value
+	int32 ek;
+	int32 ek_1;		// e[k-1]
+	int32 ek_2;		// e[k-2]
 
-	float uk;
-	float uk_1;
+	int32 uk;
+	int32 uk_1;
+
+	int32 integral;
 } pid_inittypedef;
 
+#define INTEGRAL_SEPARATION_THRESHOLD		20
+#define INTEGRAL_MAX						200
+
 //----------------------变量声明----------------------//
+extern pid_inittypedef left_motor_pid;
+extern pid_inittypedef right_motor_pid;
 
 //----------------------函数声明----------------------//
-
-#define PID_CONTROLLER_MAX_EK			40
-#define PID_CONTROLLER_MAX_OUTPUT		1000
-
 void init_pid(pid_inittypedef *pid);
-int pid_set_parameters(pid_inittypedef * pid, uint16 setpoint, float setkp, float setki, float setkd);
-int16 pid_increment(pid_inittypedef * pid, uint16 feedback);
+int pid_set_parameters(pid_inittypedef * pid, int32 setpoint, float setkp, float setki, float setkd);
+int32 pid_increment(pid_inittypedef * pid, int32 feedback);
+int32 pid_position(pid_inittypedef* pid, int32 feedback);
 
 #endif

@@ -1,11 +1,14 @@
 #include "DEV_PID.h"
 
-void pid_init(pid_inittypedef * pid)
+pid_inittypedef left_motor_pid;
+pid_inittypedef right_motor_pid;
+
+void init_pid(pid_inittypedef * pid)
 {
 	bzero(pid, sizeof(pid_inittypedef));
 }
 
-int pid_set_parameters(pid_inittypedef * pid, uint16 setpoint, float setkp, float setki, float setkd)
+int pid_set_parameters(pid_inittypedef * pid, int32 setpoint, float setkp, float setki, float setkd)
 {
 	pid->point = setpoint;
 
@@ -18,20 +21,20 @@ int pid_set_parameters(pid_inittypedef * pid, uint16 setpoint, float setkp, floa
 
 // return pid controller output
 // origin
-int16 pid_increment(pid_inittypedef * pid, uint16 feedback)
+int32 pid_increment(pid_inittypedef *pid, int32 feedback)
 {
 	int16 delta_uk = 0;
 	
 	pid->ek = pid->point - feedback;
 
 	// formula
-	delta_uk = pid->kp*(pid->ek-pid->ek_1) + pid->ki*pid->ek + pid->kd*(pid->ek-2*pid->ek_1+pid->ek_2)
+	delta_uk = pid->kp*(pid->ek-pid->ek_1) + pid->ki*pid->ek + pid->kd*(pid->ek-2*pid->ek_1+pid->ek_2);
 	pid->uk = pid->uk_1 + delta_uk;
 
 	if (pid->uk < 0)
 		pid->uk = 0;
-	else if (pid->uk > PID_CONTROLLER_MAX_OUTPUT)
-		pid->uk = PID_CONTROLLER_MAX_OUTPUT;
+	else if (pid->uk > MOTOR_PWM_MAX)
+		pid->uk = MOTOR_PWM_MAX;
 
 	pid->uk_1 = pid->uk;
 
@@ -42,19 +45,29 @@ int16 pid_increment(pid_inittypedef * pid, uint16 feedback)
 }
 
 // origin
-uint32 pid_position(pid_inittypedef* pid, uint32 feedback)
+int32 pid_position(pid_inittypedef* pid, int32 feedback)
 {
 	pid->ek = pid->point - feedback;
 
 	// u(t) = kp * e(t) + ki * [e(1) + e(2) + ....+ e(t)] + kd * [e(t) - e(t-1)]
-	pid->integral += pid->ek;
-	pid->uk = pid->kp*pid->ek + pid->ki*pid->integral + pid->kd*(pid->ek-*pid->ek_1);
-
+	if (abs(pid->ek) > INTEGRAL_SEPARATION_THRESHOLD)
+		pid->integral = 0;
+	else {
+		pid->integral += pid->ek;
+		
+		if (pid->integral < -INTEGRAL_MAX)
+			pid->integral = -INTEGRAL_MAX;
+		else if (pid->integral > INTEGRAL_MAX)
+			pid->integral = INTEGRAL_MAX;
+	}
+	
+	pid->uk = pid->kp*pid->ek + pid->ki*pid->integral + pid->kd*(pid->ek-pid->ek_1);
+	
 	// limit
-	if (pid->uk < 0)
-		pid->uk = 0;
-	else if (pid->uk > PID_CONTROLLER_MAX_OUTPUT)
-		pid->uk = PID_CONTROLLER_MAX_OUTPUT;
+	if (pid->uk < -MOTOR_PWM_MAX)
+		pid->uk = -MOTOR_PWM_MAX;
+	else if (pid->uk > MOTOR_PWM_MAX)
+		pid->uk = MOTOR_PWM_MAX;
 
 	//pid->ek_2 = pid->ek_1;
 	pid->ek_1 = pid->ek;
@@ -62,6 +75,7 @@ uint32 pid_position(pid_inittypedef* pid, uint32 feedback)
 	return pid->uk;
 }
 
+#if 0
 float pid_calc(struct _pid *pid)
 {
 	int err;
@@ -97,5 +111,5 @@ float pid_calc(struct _pid *pid)
 
 	return (result);
 }
-
+#endif
 
