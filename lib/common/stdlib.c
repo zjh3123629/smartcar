@@ -402,8 +402,55 @@ void * bzero (void *s, unsigned n)
 
 /****************************************************************/
 
-int32 abs(int32 number)
+uint32 abs(int32 number)
 {
 	return (number>= 0 ? number : -number);
 }
+
+char * strrev(char * string)
+{
+	char *start = string;
+	char *left = string;
+	char ch;
+
+	ASSERT(NULL == string);
+
+	while (*string++)	/* find end of string */
+		;
+	string -= 2;
+
+	while (left < string) {
+        ch = *left;
+        *left++ = *string;
+        *string-- = ch;
+	}
+
+	return start;
+}
+
+char * int_2_string(int data)
+{
+	static char str[8] = {0};
+	int tmp = data;
+	int i = 0;
+
+	bzero(str, 8);
+
+	if (tmp < 0) {
+		data = tmp = -tmp;
+		i += 1;
+		str[0] = '-';
+	}
+
+	while ((tmp /= 10) > 0)
+		i++;
+
+	while (data > 0) {
+		str[i--] = data%10 + '0';
+		data /= 10;
+	}
+
+	return str;
+}
+
 
