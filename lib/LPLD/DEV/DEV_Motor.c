@@ -1,5 +1,8 @@
 #include "DEV_Motor.h"
 
+int32 g_motor_speed_old=0, g_motor_speed_new=0;
+int32 g_left_motor_pwm=0, g_right_motor_pwm=0;
+
 static void init_FTM0(void)
 {
 	FTM_InitTypeDef ftm_init_struct;
@@ -103,3 +106,52 @@ void init_motor(void)
 	init_left_motor();
 	init_right_motor();
 }
+
+void motor_speed_smooth(void)
+{
+	int32 nValue = 0;
+	
+	nValue = g_motor_speed_new - g_motor_speed_old;
+	nValue = nValue * (g_pit0_counter + 1) / (MOTOR_PID_CALC_PERIOD/PIT0_TIMER_PERIOD - 1) + g_motor_speed_old;
+	g_left_motor_pwm = g_right_motor_pwm = nValue;
+}
+
+static int32 integral = 0;
+void motor_speed_adjust_calc(void)
+{
+	int32 left_speed=0, right_speed=0, delta_speed=0;
+	int32 P=0, I=0;
+	int32 speed=0;
+	
+	left_speed = g_left_pulse;
+	right_speed = g_right_pulse;
+	speed = (left_speed + right_speed) / 2;
+
+	g_motor_speed_old = g_motor_speed_new;
+
+#if 0
+	delta_speed = MOTOR_INIT_SPEED - speed;
+	P = (float)delta_speed * MOTOR_SPEED_KP;
+	I = (float)delta_speed * MOTOR_SPEED_KI;
+
+#define SPEED_CONTROL_INTEGRAL_MAX	200
+	integral -= I;
+	if (integral > SPEED_CONTROL_INTEGRAL_MAX)
+		integral = SPEED_CONTROL_INTEGRAL_MAX;
+	else if (integral < -SPEED_CONTROL_INTEGRAL_MAX)
+		integral = -SPEED_CONTROL_INTEGRAL_MAX;
+	
+	g_motor_speed_new = (int32)(integral) - P;
+	
+	printf("delta_speed=%d, integral=%d, P=%d, speed=%d\n", delta_speed, integral, P, g_motor_speed_new);
+#else
+	g_motor_speed_new = -pid_position(&left_motor_pid, speed);
+
+	printf("delta_speed=%d, speed=%d\n", left_motor_pid.point-speed, g_motor_speed_new);
+#endif
+	
+	//if(integral > MOTOR_OUT_MAX) integral = MOTOR_OUT_MAX;
+	//if(integral < MOTOR_OUT_MIN) integral = MOTOR_OUT_MIN;
+}
+
+

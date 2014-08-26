@@ -83,6 +83,8 @@ void balance_keep(balance_inittype_def* balance_type)
 	nD = (balance.gyro_h - balance.gyro_h_offset) * ANGLE_KD;
 
 	right_motor_pwm = left_motor_pwm = nP - nD;
+	left_motor_pwm += g_left_motor_pwm;
+	right_motor_pwm += g_right_motor_pwm;
 
 	if (left_motor_pwm >= 0)
 		left_motor_pwm += MOTOR_DEADZONE;

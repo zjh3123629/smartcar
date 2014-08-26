@@ -31,8 +31,8 @@ int32 pid_increment(pid_inittypedef *pid, int32 feedback)
 	delta_uk = pid->kp*(pid->ek-pid->ek_1) + pid->ki*pid->ek + pid->kd*(pid->ek-2*pid->ek_1+pid->ek_2);
 	pid->uk = pid->uk_1 + delta_uk;
 
-	if (pid->uk < 0)
-		pid->uk = 0;
+	if (pid->uk < -MOTOR_PWM_MAX)
+		pid->uk = -MOTOR_PWM_MAX;
 	else if (pid->uk > MOTOR_PWM_MAX)
 		pid->uk = MOTOR_PWM_MAX;
 
@@ -42,6 +42,7 @@ int32 pid_increment(pid_inittypedef *pid, int32 feedback)
 	pid->ek_1 = pid->ek;
 
 	return pid->uk;
+	//return delta_uk;
 }
 
 // origin
@@ -50,9 +51,9 @@ int32 pid_position(pid_inittypedef* pid, int32 feedback)
 	pid->ek = pid->point - feedback;
 
 	// u(t) = kp * e(t) + ki * [e(1) + e(2) + ....+ e(t)] + kd * [e(t) - e(t-1)]
-	if (abs(pid->ek) > INTEGRAL_SEPARATION_THRESHOLD)
-		pid->integral = 0;
-	else {
+	if (abs(pid->ek) > INTEGRAL_SEPARATION_THRESHOLD) {
+		//pid->integral = 0;
+	} else {
 		pid->integral += pid->ek;
 		
 		if (pid->integral < -INTEGRAL_MAX)
@@ -61,7 +62,7 @@ int32 pid_position(pid_inittypedef* pid, int32 feedback)
 			pid->integral = INTEGRAL_MAX;
 	}
 	
-	pid->uk = pid->kp*pid->ek + pid->ki*pid->integral + pid->kd*(pid->ek-pid->ek_1);
+	pid->uk = pid->kp*(float)pid->ek + pid->ki*(float)pid->integral + pid->kd*(float)(pid->ek-pid->ek_1);
 	
 	// limit
 	if (pid->uk < -MOTOR_PWM_MAX)

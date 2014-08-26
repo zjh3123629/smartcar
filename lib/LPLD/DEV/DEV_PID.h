@@ -17,8 +17,8 @@ typedef struct PID
 	int32 ek_1;		// e[k-1]
 	int32 ek_2;		// e[k-2]
 
-	int32 uk;
-	int32 uk_1;
+	float uk;
+	float uk_1;
 
 	int32 integral;
 } pid_inittypedef;

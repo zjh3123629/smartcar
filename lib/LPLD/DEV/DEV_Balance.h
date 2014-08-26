@@ -19,15 +19,15 @@ typedef struct
 
 extern balance_inittype_def balance;
 
-#define BALANCE_ANGLE 	2630
+#define BALANCE_ANGLE 	2615
 #define BALANCE_GYRO	2779
 
 #define GYRO_FACTOR	0.9
 #define ACCEL_FACTOR	(1-GYRO_FACTOR)
 
 enum {
-	ANGLE_KP = 12,
-	ANGLE_KD = 8,
+	ANGLE_KP = 10,
+	ANGLE_KD = 6,
 };
 
 void balance_init(void);
