@@ -68,8 +68,23 @@ void balance_init(void)
 }
 
 uint16 balance_cal_ang(balance_inittype_def* balance_type, float accel, float gyro_h)
-{	
-	balance_type->angle = GYRO_FACTOR*(balance_type->angle + gyro_h * 0.005) + ACCEL_FACTOR*accel;
+{
+#if 0
+	balance_type->angle = GYRO_FACTOR*(balance_type->angle + gyro_h * 0.001) + ACCEL_FACTOR*accel;
+#else
+	// 清华方案
+	static float angle_sigma = 0;
+	float delta_value = 0;
+
+	gyro_h = gyro_h * GYRO_RATIO;
+	
+	balance_type->angle = angle_sigma / 32.0;
+	delta_value = accel - balance_type->angle;
+	delta_value = delta_value * CAR_ACCE_RATIO;
+	
+	angle_sigma += (gyro_h + delta_value);
+	//printf("%d\n", (int32)angle_sigma);
+#endif
 
 	return balance_type->angle;
 }
@@ -79,10 +94,10 @@ void balance_keep(balance_inittype_def* balance_type)
 	int32 nP, nD;
 	int32 left_motor_pwm=0, right_motor_pwm=0;
 
-	nP = (BALANCE_ANGLE - balance.angle) * ANGLE_KP;
-	nD = (balance.gyro_h - balance.gyro_h_offset) * ANGLE_KD;
+	nP = balance.angle * ANGLE_KP;
+	nD = balance.gyro_h * ANGLE_KD;
 
-	right_motor_pwm = left_motor_pwm = nP - nD;
+	right_motor_pwm = left_motor_pwm = nD + nP;
 	left_motor_pwm += g_left_motor_pwm;
 	right_motor_pwm += g_right_motor_pwm;
 
@@ -96,7 +111,7 @@ void balance_keep(balance_inittype_def* balance_type)
 	else if (right_motor_pwm < 0)
 		right_motor_pwm -= MOTOR_DEADZONE;
 
-	//printf("motor_pwm=%d, kp=%d, kd=%d\n", motor_pwm, (int32)(balance_pid.kp), (int32)balance_pid.kd);
+	//printf("motor_pwm=%d, kp=%d, kd=%d\n", left_motor_pwm, (int32)(nP), (int32)nD);
 	motor_change_pwm(LEFT_MOTOR, left_motor_pwm);
 	motor_change_pwm(RIGHT_MOTOR, right_motor_pwm);
 }

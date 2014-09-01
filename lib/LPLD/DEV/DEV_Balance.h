@@ -13,21 +13,23 @@ typedef struct
 	float gyro_h;
 	float angle;
 
-	uint32 gyro_h_offset;
+	int32 gyro_h_offset;
 
 } balance_inittype_def ;
 
 extern balance_inittype_def balance;
 
-#define BALANCE_ANGLE 	2615
-#define BALANCE_GYRO	2779
+#define BALANCE_ANGLE 	2455
 
 #define GYRO_FACTOR	0.9
 #define ACCEL_FACTOR	(1-GYRO_FACTOR)
 
+#define GYRO_RATIO		0.3
+#define CAR_ACCE_RATIO 	2
+
 enum {
-	ANGLE_KP = 10,
-	ANGLE_KD = 6,
+	ANGLE_KP = 18,
+	ANGLE_KD = 7,
 };
 
 void balance_init(void);
