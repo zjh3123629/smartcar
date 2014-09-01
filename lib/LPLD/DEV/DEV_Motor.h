@@ -9,13 +9,13 @@
 #define MOTOR_PWM_MAX	(BUS_CLK_MHZ*50)
 #define MOTOR_PWM_INIT	0
 
-#define MOTOR_DEADZONE 100
+#define MOTOR_DEADZONE 0
 
 #define MOTOR_PID_CALC_PERIOD	50	//ms
 
 #define MOTOR_INIT_SPEED 	0
-#define MOTOR_SPEED_KP		3
-#define MOTOR_SPEED_KI		0.2
+#define MOTOR_SPEED_KP		10.0
+#define MOTOR_SPEED_KI		5.0
 
 enum {
 	LEFT_MOTOR,

@@ -116,38 +116,37 @@ void motor_speed_smooth(void)
 	g_left_motor_pwm = g_right_motor_pwm = nValue;
 }
 
-static int32 integral = 0;
+static float integral = 0;
 void motor_speed_adjust_calc(void)
 {
-	int32 left_speed=0, right_speed=0, delta_speed=0;
-	int32 P=0, I=0;
+	float delta_speed=0, P=0, I=0;
 	int32 speed=0;
-	
-	left_speed = g_left_pulse;
-	right_speed = g_right_pulse;
-	speed = (left_speed + right_speed) / 2;
+
+	speed = (g_left_pulse + g_right_pulse) / 2;
+
+#if 1
+	delta_speed = (float)(MOTOR_INIT_SPEED - speed);
+	P = delta_speed * MOTOR_SPEED_KP;
+	I = delta_speed * MOTOR_SPEED_KI;
 
 	g_motor_speed_old = g_motor_speed_new;
 
-#if 0
-	delta_speed = MOTOR_INIT_SPEED - speed;
-	P = (float)delta_speed * MOTOR_SPEED_KP;
-	I = (float)delta_speed * MOTOR_SPEED_KI;
-
-#define SPEED_CONTROL_INTEGRAL_MAX	200
 	integral -= I;
+	g_motor_speed_new = (int32)(integral/16.0 - P);
+	
+#define SPEED_CONTROL_INTEGRAL_MAX	1000
+#if 0
 	if (integral > SPEED_CONTROL_INTEGRAL_MAX)
 		integral = SPEED_CONTROL_INTEGRAL_MAX;
 	else if (integral < -SPEED_CONTROL_INTEGRAL_MAX)
 		integral = -SPEED_CONTROL_INTEGRAL_MAX;
+#endif
 	
-	g_motor_speed_new = (int32)(integral) - P;
-	
-	printf("delta_speed=%d, integral=%d, P=%d, speed=%d\n", delta_speed, integral, P, g_motor_speed_new);
+	//printf("delta_speed=%d, integral=%d, P=%d, speed=%d\n", delta_speed, integral, P, g_motor_speed_new);
 #else
 	g_motor_speed_new = -pid_position(&left_motor_pid, speed);
 
-	printf("delta_speed=%d, speed=%d\n", left_motor_pid.point-speed, g_motor_speed_new);
+	//printf("delta_speed=%d, speed=%d\n", left_motor_pid.point-speed, g_motor_speed_new);
 #endif
 	
 	//if(integral > MOTOR_OUT_MAX) integral = MOTOR_OUT_MAX;

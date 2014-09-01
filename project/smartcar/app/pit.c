@@ -46,16 +46,16 @@ void pit0_isr(void)
 	motor_speed_smooth();
 
 
-
 	// 角度环
-	balance.gyro_h= balance.gyro_h_offset*2 - LPLD_ADC_Get(ADC1, DAD1);
-	balance.accel_y= LPLD_ADC_Get(ADC1, AD20);
+	// 将gyro_h和accel归一化为+-
+	balance.accel_y = BALANCE_ANGLE - LPLD_ADC_Get(ADC1, AD20);
+	balance.gyro_h = LPLD_ADC_Get(ADC1, DAD1) - balance.gyro_h_offset;
 	balance_cal_ang(&balance, balance.accel_y, balance.gyro_h);
-	balance_keep(&balance);
 #ifdef DEBUG_PRINT
 	//@3|%d|%d|%d#
-	//printf("@3|%d|%d|%d#\n", (uint32)balance.accel_y, (uint32)balance.gyro_h, (uint32)balance.angle);
+	//printf("@3|%d|%d|%d#\n", (int32)balance.accel_y, (int32)balance.gyro_h, (int32)balance.angle);
 #endif
+	balance_keep(&balance);
 
 	LPLD_LPTMR_ResetCounter();
 	LPLD_FTM_ClearCounter(FTM2);
