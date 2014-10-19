@@ -2,63 +2,30 @@
 
 static PIT_InitTypeDef pit0_init_struct;
 
-int32 g_left_pulse = 0;
-int32 g_right_pulse = 0;
-
-int32 g_pit0_counter = 0;
-
 void pit0_isr(void)
 {
-	uint32 left_pulse, right_pulse=0;
-	
-	g_pit0_counter++;
-	
-	// 速度环
-	/* calc pulse */
-	right_pulse = LPLD_FTM_GetCounter(FTM2);	// refer to P1062: 一个脉冲会让CNT+4
-	left_pulse = LPLD_LPTMR_GetPulseAcc();
-	if (right_pulse > 60000) {
-		// negative
-		left_pulse = -left_pulse;
-		
-		right_pulse = (65536 - right_pulse) / 4;
-		right_pulse = -right_pulse;
-	} else {
-		// positive
-		right_pulse = right_pulse >> 2;
-	}
-	g_left_pulse += left_pulse;
-	g_right_pulse += right_pulse;
+	static int32 pit0_counter = 0;
 
-	if (g_pit0_counter >= MOTOR_PID_CALC_PERIOD/PIT0_TIMER_PERIOD) {
-		g_pit0_counter = 0;
-
-#ifdef DEBUG_PRINT
-	//@3|%d|%d|%d#
-	//printf("%d, %d\n", g_left_pulse, g_right_pulse);
-#endif
-		motor_speed_adjust_calc();
-
-		g_left_pulse = 0;
-		g_right_pulse = 0;
-	}
-
-	motor_speed_smooth();
-
+	pit0_counter++;
 
 	// 角度环
 	// 将gyro_h和accel归一化为+-
-	balance.accel_y = BALANCE_ANGLE - LPLD_ADC_Get(ADC1, AD20);
-	balance.gyro_h = LPLD_ADC_Get(ADC1, DAD1) - balance.gyro_h_offset;
-	balance_cal_ang(&balance, balance.accel_y, balance.gyro_h);
-#ifdef DEBUG_PRINT
-	//@3|%d|%d|%d#
-	//printf("@3|%d|%d|%d#\n", (int32)balance.accel_y, (int32)balance.gyro_h, (int32)balance.angle);
-#endif
-	balance_keep(&balance);
+	balance_calc_ang();
+	balance_keep();
 
-	LPLD_LPTMR_ResetCounter();
-	LPLD_FTM_ClearCounter(FTM2);
+	// 速度环
+	speed_get_pulse();
+	speed_output_smoothly(pit0_counter);
+	if (pit0_counter >= SPEED_PID_CALC_PERIOD/PIT0_TIMER_PERIOD) {
+		pit0_counter = 0;
+
+		speed_pid_calc();
+	}
+
+	// finally output
+	motor_update_pwm(balance_get_control_value(), speed_get_control_value());
+
+	//LPLD_GPIO_Toggle_b(PTB, 23);
 }
 
 void init_pit0(void)

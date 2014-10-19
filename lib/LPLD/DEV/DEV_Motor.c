@@ -1,7 +1,6 @@
 #include "DEV_Motor.h"
 
-int32 g_motor_speed_old=0, g_motor_speed_new=0;
-int32 g_left_motor_pwm=0, g_right_motor_pwm=0;
+static Motor_InitTypeDef motor = {0};
 
 static void init_FTM0(void)
 {
@@ -65,8 +64,13 @@ static void init_right_motor(void)
  * duty>0: 正转
  * duty<0: 反转
  */
-void motor_change_pwm(uint8 left_right, int32 duty)
+static void motor_change_pwm(uint8 left_right, int32 duty)
 {
+	if (duty >= 0)
+		duty += MOTOR_DEADZONE;
+	else if (duty < 0)
+		duty -= MOTOR_DEADZONE;
+
 	// limit
 	if (duty > MOTOR_PWM_MAX)
 		duty = MOTOR_PWM_MAX;
@@ -107,50 +111,12 @@ void init_motor(void)
 	init_right_motor();
 }
 
-void motor_speed_smooth(void)
+void motor_update_pwm(int32 balance_control, int32 speed_control)
 {
-	int32 nValue = 0;
-	
-	nValue = g_motor_speed_new - g_motor_speed_old;
-	nValue = nValue * (g_pit0_counter + 1) / (MOTOR_PID_CALC_PERIOD/PIT0_TIMER_PERIOD - 1) + g_motor_speed_old;
-	g_left_motor_pwm = g_right_motor_pwm = nValue;
+	motor.left_pwm = balance_control + speed_control;
+	motor.right_pwm = balance_control + speed_control;
+
+	motor_change_pwm(LEFT_MOTOR, motor.left_pwm);
+	motor_change_pwm(RIGHT_MOTOR, motor.right_pwm);
 }
-
-static float integral = 0;
-void motor_speed_adjust_calc(void)
-{
-	float delta_speed=0, P=0, I=0;
-	int32 speed=0;
-
-	speed = (g_left_pulse + g_right_pulse) / 2;
-
-#if 1
-	delta_speed = (float)(MOTOR_INIT_SPEED - speed);
-	P = delta_speed * MOTOR_SPEED_KP;
-	I = delta_speed * MOTOR_SPEED_KI;
-
-	g_motor_speed_old = g_motor_speed_new;
-
-	integral -= I;
-	g_motor_speed_new = (int32)(integral/16.0 - P);
-	
-#define SPEED_CONTROL_INTEGRAL_MAX	1000
-#if 0
-	if (integral > SPEED_CONTROL_INTEGRAL_MAX)
-		integral = SPEED_CONTROL_INTEGRAL_MAX;
-	else if (integral < -SPEED_CONTROL_INTEGRAL_MAX)
-		integral = -SPEED_CONTROL_INTEGRAL_MAX;
-#endif
-	
-	//printf("delta_speed=%d, integral=%d, P=%d, speed=%d\n", delta_speed, integral, P, g_motor_speed_new);
-#else
-	g_motor_speed_new = -pid_position(&left_motor_pid, speed);
-
-	//printf("delta_speed=%d, speed=%d\n", left_motor_pid.point-speed, g_motor_speed_new);
-#endif
-	
-	//if(integral > MOTOR_OUT_MAX) integral = MOTOR_OUT_MAX;
-	//if(integral < MOTOR_OUT_MIN) integral = MOTOR_OUT_MIN;
-}
-
 

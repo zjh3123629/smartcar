@@ -25,7 +25,7 @@ static void init_right_encoder(void)
 	//配置正交解码功能参数
 	ftm_init_struct.FTM_Ftmx = FTM2;
 	ftm_init_struct.FTM_Mode = FTM_MODE_QD;
-	ftm_init_struct.FTM_QdMode = QD_MODE_PHAB;
+	ftm_init_struct.FTM_QdMode = QD_MODE_CNTDIR;
 	//初始化FTM
 	LPLD_FTM_Init(ftm_init_struct);
 

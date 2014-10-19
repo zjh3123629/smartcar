@@ -1,7 +1,6 @@
 #include "DEV_Balance.h"
 
-balance_inittype_def balance;
-pid_inittypedef balance_pid;
+static Balance_InitTypeDef balance_control;
 
 static void adc0_init(void)
 {
@@ -14,7 +13,7 @@ static void adc0_init(void)
 	adc_init_struct.ADC_BitMode = SE_12BIT;       		//单端12位精度
 	adc_init_struct.ADC_SampleTimeCfg = SAMTIME_SHORT;	//短采样时间
 	adc_init_struct.ADC_HwAvgSel = HW_4AVG;       		//4次硬件平均
-	//adc_init_struct.ADC_CalEnable = TRUE; 				//使能初始化校验
+	//adc_init_struct.ADC_CalEnable = TRUE; 			//使能初始化校验
 	//初始化ADC
 	LPLD_ADC_Init(adc_init_struct);
 }
@@ -29,7 +28,7 @@ static void adc1_init(void)
 	adc_init_struct.ADC_DiffMode = ADC_SE;        		//单端采集
 	adc_init_struct.ADC_BitMode = SE_12BIT;       		//单端12位精度
 	adc_init_struct.ADC_SampleTimeCfg = SAMTIME_SHORT;	//短采样时间
-	adc_init_struct.ADC_HwAvgSel = HW_4AVG;       		//4次硬件平均
+	adc_init_struct.ADC_HwAvgSel = HW_8AVG;       		//4次硬件平均
 	//adc_init_struct.ADC_CalEnable = TRUE; 				//使能初始化校验
 	//初始化ADC
 	LPLD_ADC_Init(adc_init_struct);
@@ -37,24 +36,24 @@ static void adc1_init(void)
 
 static void balance_get_gyro_offset(void)
 {
-#define AVERAGE_SUM	1000
 	int i = 0;
 	uint32 offset = 0;
 
-	for (i=0; i<AVERAGE_SUM; ++i)
+	for (i=0; i<AVERAGE_CNT; ++i)
 		offset += LPLD_ADC_Get(ADC1, DAD1);
 
-	balance.gyro_h_offset = offset / AVERAGE_SUM;
+	balance_control.gyro_h_offset = offset / AVERAGE_CNT;
 
-	oled_print(0, 0, int_2_string(balance.gyro_h_offset), NORMAL_DISPLAY);
+	oled_print(0, 0, int_2_string(balance_control.gyro_h_offset), NORMAL_DISPLAY);
 }
 
 static void balance_get_offset(void)
 {
 	balance_get_gyro_offset();
+	balance_control.accel_y_offset = BALANCE_ANGLE;
 }
 
-void balance_init(void)
+void init_balance(void)
 {
 	//adc0_init();
 	adc1_init();
@@ -67,52 +66,48 @@ void balance_init(void)
 	balance_get_offset();
 }
 
-uint16 balance_cal_ang(balance_inittype_def* balance_type, float accel, float gyro_h)
+void balance_calc_ang(void)
 {
+	balance_control.accel_y = (float)(balance_control.accel_y_offset - LPLD_ADC_Get(ADC1, AD20));
+	balance_control.gyro_h = (float)(LPLD_ADC_Get(ADC1, DAD1) - balance_control.gyro_h_offset);
+
 #if 0
 	balance_type->angle = GYRO_FACTOR*(balance_type->angle + gyro_h * 0.001) + ACCEL_FACTOR*accel;
 #else
 	// 清华方案
 	static float angle_sigma = 0;
 	float delta_value = 0;
+	float gyro_h = 0;
 
-	gyro_h = gyro_h * GYRO_RATIO;
+	gyro_h = balance_control.gyro_h * GYRO_RATIO;
 	
-	balance_type->angle = angle_sigma / 32.0;
-	delta_value = accel - balance_type->angle;
-	delta_value = delta_value * CAR_ACCE_RATIO;
+	balance_control.angle = angle_sigma / 1024.0;
+	delta_value = balance_control.accel_y - balance_control.angle;
+	delta_value *= ACCE_RATIO;
 	
 	angle_sigma += (gyro_h + delta_value);
-	//printf("%d\n", (int32)angle_sigma);
 #endif
 
-	return balance_type->angle;
+#ifdef DEBUG_PRINT
+	//@3|%d|%d|%d#
+	//printf("@3|%d|%d|%d#\n", (int32)balance.accel_y, (int32)balance.gyro_h, (int32)balance.angle);
+#endif
 }
 
-void balance_keep(balance_inittype_def* balance_type)
+void balance_keep(void)
 {
-	int32 nP, nD;
-	int32 left_motor_pwm=0, right_motor_pwm=0;
+	float nP=0, nD=0;
 
-	nP = balance.angle * ANGLE_KP;
-	nD = balance.gyro_h * ANGLE_KD;
+	// angle control
+	nP = balance_control.angle * ANGLE_KP;
+	nD = balance_control.gyro_h * ANGLE_KD;
+	balance_control.pwm = (int32)(nD + nP);
 
-	right_motor_pwm = left_motor_pwm = nD + nP;
-	left_motor_pwm += g_left_motor_pwm;
-	right_motor_pwm += g_right_motor_pwm;
+	//printf("%d, %d, %d\n", (int32)(nP), (int32)nD, balance_control.balance_pwm);
+}
 
-	if (left_motor_pwm >= 0)
-		left_motor_pwm += MOTOR_DEADZONE;
-	else if (left_motor_pwm < 0)
-		left_motor_pwm -= MOTOR_DEADZONE;
-
-	if (right_motor_pwm >= 0)
-		right_motor_pwm += MOTOR_DEADZONE;
-	else if (right_motor_pwm < 0)
-		right_motor_pwm -= MOTOR_DEADZONE;
-
-	//printf("motor_pwm=%d, kp=%d, kd=%d\n", left_motor_pwm, (int32)(nP), (int32)nD);
-	motor_change_pwm(LEFT_MOTOR, left_motor_pwm);
-	motor_change_pwm(RIGHT_MOTOR, right_motor_pwm);
+int32 balance_get_control_value(void)
+{
+	return balance_control.pwm;
 }
 

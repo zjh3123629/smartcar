@@ -2,10 +2,7 @@
 #define __DEV_BALANCE__
 
 #include "common.h"
-#include "DEV_PID.h"
-#include "DEV_Motor.h"
 #include "DEV_OLED.h"
-#include "pit.h"
 
 typedef struct 
 {
@@ -14,26 +11,35 @@ typedef struct
 	float angle;
 
 	int32 gyro_h_offset;
+	int32 accel_y_offset;
 
-} balance_inittype_def ;
+	int32 pwm;
+} Balance_InitTypeDef;
 
-extern balance_inittype_def balance;
+#define AVERAGE_CNT	1000
 
-#define BALANCE_ANGLE 	2455
+#define BALANCE_ANGLE 	2465
 
-#define GYRO_FACTOR	0.9
+#if 0
+#define GYRO_FACTOR		0.9
 #define ACCEL_FACTOR	(1-GYRO_FACTOR)
+#else
+#define GYRO_RATIO		20.0
+#define ACCE_RATIO 	12.0
+#endif
 
-#define GYRO_RATIO		0.3
-#define CAR_ACCE_RATIO 	2
+#if 0
+#define ANGLE_KP	0
+#define ANGLE_KD	0
+#else
+#define ANGLE_KP	35.0
+#define ANGLE_KD	7.0
+#endif
 
-enum {
-	ANGLE_KP = 18,
-	ANGLE_KD = 7,
-};
+void init_balance(void);
+void balance_calc_ang(void);
+void balance_keep(void);
 
-void balance_init(void);
-uint16 balance_cal_ang(balance_inittype_def* balance_type, float accel, float gyro_h);
-void balance_keep(balance_inittype_def* balance_type);
+int32 balance_get_control_value(void);
 
 #endif

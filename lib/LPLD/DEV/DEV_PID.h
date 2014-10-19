@@ -24,7 +24,7 @@ typedef struct PID
 } pid_inittypedef;
 
 #define INTEGRAL_SEPARATION_THRESHOLD		20
-#define INTEGRAL_MAX						200
+#define INTEGRAL_MAX						1000
 
 //----------------------±äÁ¿ÉùÃ÷----------------------//
 extern pid_inittypedef left_motor_pid;
