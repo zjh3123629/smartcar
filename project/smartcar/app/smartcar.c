@@ -28,11 +28,8 @@ void main(void)
 	//init_indicate_gpio();
 
 	init_oled();
-	
-	init_balance();
-	
+	init_adc();
 	init_encoder();
-
 	init_motor();
 	init_speed(0, 40, 2);
 	

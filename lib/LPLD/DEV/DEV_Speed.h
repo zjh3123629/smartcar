@@ -21,6 +21,7 @@ typedef struct {
 	int32 current_pwm;
 } Speed_InitTypeDef;
 
+#define SPEED_INTEGRAL_MAX		1000
 #define SPEED_PID_CALC_PERIOD	20	//ms
 
 void init_speed(float point, float kp, float ki);

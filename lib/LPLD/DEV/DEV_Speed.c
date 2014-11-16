@@ -1,14 +1,14 @@
 #include "DEV_Speed.h"
 
-static Speed_InitTypeDef speed_control = {0};
+static Speed_InitTypeDef speed = {0};
 
 void init_speed(float point, float kp, float ki)
 {
-	bzero(&speed_control, sizeof(speed_control));
+	bzero(&speed, sizeof(speed));
 	
-	speed_control.point = point;
-	speed_control.kp= kp;
-	speed_control.ki = ki;
+	speed.point = point;
+	speed.kp = kp;
+	speed.ki = ki;
 }
 
 void speed_get_pulse(void)
@@ -38,8 +38,8 @@ void speed_get_pulse(void)
 	}
 */
 
-	speed_control.left_pulse += left_pulse;
-	speed_control.right_pulse += right_pulse;
+	speed.left_pulse += left_pulse;
+	speed.right_pulse += right_pulse;
 
 	LPLD_LPTMR_ResetCounter();
 	LPLD_FTM_ClearCounter(FTM2);
@@ -49,49 +49,48 @@ void speed_output_smoothly(int32 step)
 {
 	int32 nValue = 0;
 	
-	nValue = speed_control.new_pwm - speed_control.old_pwm;
-	nValue = nValue * (step - 1) / (SPEED_PID_CALC_PERIOD/PIT0_TIMER_PERIOD - 1) + speed_control.old_pwm;
-	speed_control.current_pwm = nValue;
+	nValue = speed.new_pwm - speed.old_pwm;
+	nValue = nValue * (step - 1) / (SPEED_PID_CALC_PERIOD/PIT0_TIMER_PERIOD - 1) + speed.old_pwm;
+	speed.current_pwm = nValue;
 }
 
 void speed_pid_calc(void)
 {
-	float speed=0, P=0;
+	float ek=0, P=0;
 
 	// record motor_speed_old 
-	speed_control.old_pwm = speed_control.new_pwm;
+	speed.old_pwm = speed.new_pwm;
 
 	// calc speed error
-	speed = ((float)(speed_control.left_pulse + speed_control.right_pulse)) / 2.0;
-	speed = speed_control.point - speed;
+	ek = ((float)(speed.left_pulse + speed.right_pulse)) / 2.0;
+	ek = speed.point - ek;
 	//³µÂÖËÙ¶ÈÂË²¨
-	speed_control.speed_filter *= 0.85;
-	speed_control.speed_filter += speed * 0.15;
+	speed.speed_filter *= 0.85;
+	speed.speed_filter += ek * 0.15;
 
 	// PI control
-	P = speed_control.speed_filter * speed_control.kp;
-	speed_control.integral -= speed_control.speed_filter * speed_control.ki;
-#define SPEED_CONTROL_INTEGRAL_MAX	1000
-	if (speed_control.integral > SPEED_CONTROL_INTEGRAL_MAX)
-		speed_control.integral = SPEED_CONTROL_INTEGRAL_MAX;
-	else if (speed_control.integral < -SPEED_CONTROL_INTEGRAL_MAX)
-		speed_control.integral = -SPEED_CONTROL_INTEGRAL_MAX;
+	P = speed.speed_filter * speed.kp;
+	speed.integral -= speed.speed_filter * speed.ki;
+	if (speed.integral > SPEED_INTEGRAL_MAX)
+		speed.integral = SPEED_INTEGRAL_MAX;
+	else if (speed.integral < -SPEED_INTEGRAL_MAX)
+		speed.integral = -SPEED_INTEGRAL_MAX;
 	
-	speed_control.new_pwm = (int32)(speed_control.integral - P);
+	speed.new_pwm = (int32)(speed.integral - P);
 	
-	//printf("%d, %d, %d\n", (int32)speed, (int32)speed_control.integral, speed_control.speed_new_pwm);
+	//printf("%d, %d, %d\n", (int32)speed, (int32)speed.integral, speed.speed_new_pwm);
 
 	// clear pulse
 #ifdef DEBUG_PRINT
 	//@3|%d|%d|%d#
-	//printf("%d, %d\n", speed_control.left_pulse, speed_control.right_pulse);
+	//printf("%d, %d\n", speed.left_pulse, speed.right_pulse);
 #endif
-	speed_control.left_pulse = 0;
-	speed_control.right_pulse = 0;
+	speed.left_pulse = 0;
+	speed.right_pulse = 0;
 }
 
 int32 speed_get_control_value(void)
 {
-	return speed_control.current_pwm;
+	return speed.current_pwm;
 }
 
